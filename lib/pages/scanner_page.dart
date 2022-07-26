@@ -112,11 +112,12 @@ class _ScannerPageState extends State<ScannerPage> {
       body: Center(
         child: /* Text(
             _beaconResult), */
-            ListView.builder(
+            ListView.separated(
           itemCount: _beacons.length,
           itemBuilder: ((context, index) {
             return BeaconWidget(beacon: _beacons[index]);
           }),
+          separatorBuilder: (context, index) => const Divider(),
         ),
       ),
     );
@@ -141,7 +142,6 @@ class BeaconWidget extends StatelessWidget {
               Text("Major: ${beacon.major}     Minor: ${beacon.minor}"),
               Text("RSSI: ${beacon.rssi}     Prox: ${beacon.proximity}"),
               Text("Distance: ${beacon.distance}"),
-              const Divider()
             ],
           ),
           beacon.rssi < 0 && beacon.rssi != 0
