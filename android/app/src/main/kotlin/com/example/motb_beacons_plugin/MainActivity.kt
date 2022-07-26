@@ -1,7 +1,8 @@
 package com.example.motb_beacons_plugin
 
-import io.flutter.embedding.android.FlutterActivity
 import com.umair.beacons_plugin.BeaconsPlugin
+import io.flutter.embedding.android.FlutterActivity
+
 
 class MainActivity : FlutterActivity(){
 

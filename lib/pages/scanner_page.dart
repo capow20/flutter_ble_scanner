@@ -21,28 +21,33 @@ class _ScannerPageState extends State<ScannerPage> {
   late PermissionStatus bluetoothStatus;
   late PermissionStatus locationStatus;
 
-  void checkPermissions() async {
-    bluetoothStatus = await Permission.bluetooth.status;
-    locationStatus = await Permission.location.status;
-    if (!bluetoothStatus.isGranted) await Permission.bluetooth.request();
-    if (!locationStatus.isGranted) await Permission.location.request();
+  int compareBeacons(Beacon a, Beacon b) {
+    if (a.rssi == 0) {
+      return 1;
+    } else if (b.rssi == 0) {
+      return -1;
+    } else if (a.rssi > b.rssi) {
+      return -1;
+    } else if (a.rssi < b.rssi) {
+      return 1;
+    } else {
+      return 0;
+    }
   }
 
   void initBluetooth() async {
     BeaconsPlugin.listenToBeacons(beaconEventsController);
-
-    setState(() => isRunning = true);
     beaconEventsController.stream.listen(
       (data) {
         if (data.isNotEmpty) {
           Beacon b = Beacon.fromJson(data);
-          if (_beacons.any((element) => element.major == b.major)) {
+          if (_beacons.any((e) => e.major == b.major)) {
             int index = _beacons.indexWhere((element) => element.major == b.major);
             setState(() => _beacons[index] = b);
           } else {
             setState(() => _beacons.add(b));
           }
-          setState(() => _beacons.sort(((a, b) => a.major < b.major ? 0 : 1)));
+          setState(() => _beacons.sort((a, b) => compareBeacons(a, b)));
         }
       },
     ).onError(
@@ -54,13 +59,23 @@ class _ScannerPageState extends State<ScannerPage> {
 
   void startBt() async {
     BeaconsPlugin.addRegion("Zebra", "FE913213-B311-4A42-8C16-47FAEAC938DC");
+    BeaconsPlugin.addRegion("Zebra1", "FE913213B3114A428C1647FAEAC938DC");
+    BeaconsPlugin.addRegion("Zebra2", "fe913213b3114a428c1647faeac938dc");
+    BeaconsPlugin.addRegion("Zebra3", "fe913213-b311-4a42-8c16-47faeac938dc");
     setState(() => isRunning = true);
     if (Platform.isAndroid) {
+      /* print("platform is android");
       BeaconsPlugin.channel.setMethodCallHandler((call) async {
+        print("inisde setMethodCallBack");
         if (call.method == 'scannerReady') {
           await BeaconsPlugin.startMonitoring();
+          print("Android start monitoring called()");
+        } else {
+          print("Android not ready to start monitoring");
         }
-      });
+      }); */
+
+      BeaconsPlugin.startMonitoring();
     } else if (Platform.isIOS) {
       await BeaconsPlugin.startMonitoring();
     }
@@ -115,13 +130,26 @@ class BeaconWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text("UUID: ${beacon.uuid}"),
-          Text("Major: ${beacon.major}     Minor: ${beacon.minor}"),
-          Text("RSSI: ${beacon.rssi}     Prox: ${beacon.proximity}"),
-          Text("Distance: ${beacon.distance}"),
-          const Divider()
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //Text("UUID: ${beacon.uuid}"),
+              Text("Major: ${beacon.major}     Minor: ${beacon.minor}"),
+              Text("RSSI: ${beacon.rssi}     Prox: ${beacon.proximity}"),
+              Text("Distance: ${beacon.distance}"),
+              const Divider()
+            ],
+          ),
+          beacon.rssi < 0 && beacon.rssi != 0
+              ? const Icon(
+                  Icons.near_me,
+                  color: Colors.blue,
+                )
+              : const SizedBox()
         ],
       ),
     );
